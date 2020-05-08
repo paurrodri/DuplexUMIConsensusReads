@@ -6,9 +6,12 @@ calls consensus reads from paired-end, Duplex-UMI reads, without losing mapping 
 ## Description
 
 `DuplexUMIConsensusReads` calls consensus reads from input reads generated from the same double-stranded DNA molecule.
-These input reads are assumed to be generated from paired-end sequencing and have Unique Molecular Identifiers (UMIs) in both ends (Duplex-UMIs).
+These input reads are assumed to:
+* be generated from paired-end sequencing 
+* be generated from DNA fragments with Unique Molecular Identifiers (UMIs) attached in both ends (Duplex-UMIs).
   
 The mathematical and probabilistic procedure to determine the consensus sequence is based on [fulcrumgenomics CallMolecularConsensusReads tool](https://github.com/fulcrumgenomics/fgbio/wiki/Calling-Consensus-Reads).
+  
 The additional feature in this tool is that the mapping information of the consensus reads is also computed. Therefore, there is no need to map the consensus reads again after using this tool.
 
 
@@ -40,7 +43,7 @@ It requires the following libraries:
 
 Run:
 ```
-$ python3 DuplexUMIConsensusReads.py -i <inputfile.bam>
+python3 DuplexUMIConsensusReads.py -i <inputfile.bam>
 ``` 
 
 ### Required arguments
@@ -92,9 +95,9 @@ For full documentation, see [insert true link](https://github.com/paurrodri/Dupl
 
 ## Authors
 
-* Paula Rodríguez García (<p.rodriguezgar@hotmail.com>)
-
-
-
+Paula Rodríguez García (<p.rodriguezgar@hotmail.com>)
+  
+  
+  
 _created for the Centre for Genomic Medicine - Rigshospitalet, Copenhagen, Denmark_  
 _2020_
