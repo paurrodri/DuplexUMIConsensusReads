@@ -8,7 +8,7 @@ import numpy as np
 #############################    ARGUMENTS     ##################################
 
 def parse_args(args):
-	ap = argparse.ArgumentParser()
+	ap = argparse.ArgumentParser(description = 'call consensus reads from paired-end, Duplex-UMI reads, preserving mapping information')
 
    # INPUT FILE
 	ap.add_argument("-i", "--input_file",
