@@ -9,8 +9,6 @@ calls consensus reads from paired-end, Duplex-UMI reads, without losing mapping 
 - [Installation](#installation)
 - [Dependencies](#dependencies)
 - [Usage](#usage)
-  * [Required arguments](#required-arguments)
-  * [Optional arguments](#optional-arguments)
 - [Help](#help)
 - [Documentation](#documentation)
 - [Authors](#authors)
