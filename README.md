@@ -3,16 +3,17 @@
 calls consensus reads from paired-end, Duplex-UMI reads, without losing mapping information
 
 
-- [DuplexUMIConsensusReads](#duplexumiconsensusreads)
-  * [Description](#description)
-  * [Installation](#installation)
-  * [Dependencies](#dependencies)
-  * [Usage](#usage)
-    + [Required arguments](#required-arguments)
-    + [Optional arguments](#optional-arguments)
-  * [Help](#help)
-  * [Documentation](#documentation)
-  * [Authors](#authors)
+## Contents
+
+- [Description](#description)
+- [Installation](#installation)
+- [Dependencies](#dependencies)
+- [Usage](#usage)
+  * [Required arguments](#required-arguments)
+  * [Optional arguments](#optional-arguments)
+- [Help](#help)
+- [Documentation](#documentation)
+- [Authors](#authors)
 
 
 ## Description
