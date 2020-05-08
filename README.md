@@ -111,6 +111,7 @@ For full documentation, see [insert true link](https://github.com/paurrodri/Dupl
 Paula Rodríguez García (<p.rodriguezgar@hotmail.com>)
   
   
+##  
   
 _created for the Centre for Genomic Medicine - Rigshospitalet, Copenhagen, Denmark_  
 _as part of a Master's project at the Technical University of Denmark_  
