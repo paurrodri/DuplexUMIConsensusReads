@@ -112,6 +112,6 @@ Paula Rodríguez García (<p.rodriguezgar@hotmail.com>)
   
   
   
-_created for the Centre for Genomic Medicine - Rigshospitalet, Copenhagen, Denmark_ 
-_as part of a Master's project at the Technical University of Denmark_
+_created for the Centre for Genomic Medicine - Rigshospitalet, Copenhagen, Denmark_  
+_as part of a Master's project at the Technical University of Denmark_  
 _2020_
