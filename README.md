@@ -3,6 +3,18 @@
 calls consensus reads from paired-end, Duplex-UMI reads, without losing mapping information
 
 
+- [DuplexUMIConsensusReads](#duplexumiconsensusreads)
+  * [Description](#description)
+  * [Installation](#installation)
+  * [Dependencies](#dependencies)
+  * [Usage](#usage)
+    + [Required arguments](#required-arguments)
+    + [Optional arguments](#optional-arguments)
+  * [Help](#help)
+  * [Documentation](#documentation)
+  * [Authors](#authors)
+
+
 ## Description
 
 `DuplexUMIConsensusReads` calls consensus reads from input reads generated from the same double-stranded DNA molecule.
@@ -27,7 +39,7 @@ git clone https://github.com/paurrodri/DuplexUMIConsensusReads.git
 
 ## Dependencies
 
-DuplexUMIConsensusReads is dependent on Python >= 3.6. 
+`DuplexUMIConsensusReads` is dependent on Python >= 3.6. 
   
 It requires the following libraries:
 
@@ -48,7 +60,7 @@ python3 DuplexUMIConsensusReads.py -i <inputfile.bam>
 
 ### Required arguments
 
-The only required argument is the **input file**, given as `-i` or `--input_file`.
+The only required argument is the **input file**, given with `-i` or `--input_file`.
   
 The input file is assumed to:
 * be a binary Sequence Alignment/Map file (`.bam` format)
