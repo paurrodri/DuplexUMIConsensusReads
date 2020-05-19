@@ -101,7 +101,7 @@ python3 DuplexUMIConsensusReads.py -h
 
 ## Documentation
 
-For full documentation, [click here](https://paurrodri.github.io/DuplexUMIConsensusReads/documentation.html)
+For full documentation, [click here](Https://paurrodri.github.io/DuplexUMIConsensusReads/documentation.html)
 
 
 ## Authors
