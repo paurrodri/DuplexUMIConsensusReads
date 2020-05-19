@@ -5,7 +5,6 @@ output:
     toc: yes
     toc_depth: 3
     toc_float: yes
-date: "`r format(Sys.time(), '%d/%m/%Y')`"
 ---
   
 ```{css, echo=FALSE}
@@ -22,8 +21,9 @@ body {
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+<br/>
 
-# Summary
+# **Summary**
 
 `DuplexUMIConsensusReads` calls consensus reads from input reads generated from the same double-stranded DNA molecule.
 
@@ -40,8 +40,11 @@ The novel feature of this tool is the fact that mapping information of the conse
 
 This feature is contained in the script function `make_consensus_read()`, which is the core of the script and is explained in this [Section](#function).
 
+<br/>
 
-# How to use
+
+# **How to use**
+<br/>
 
 ## Installation
 
@@ -51,6 +54,7 @@ or clone the repository:
 ```
 git clone https://github.com/paurrodri/DuplexUMIConsensusReads.git
 ```
+<br/>
 
 ## Dependencies
 
@@ -65,6 +69,7 @@ It requires the following libraries:
 * numpy
 * pysam
 
+<br/>
 
 ## Usage
 
@@ -72,6 +77,7 @@ Run:
 ```
 python3 DuplexUMIConsensusReads.py -i <inputfile.bam>
 ``` 
+<br/>
 
 ### Required arguments
 
@@ -87,6 +93,7 @@ The input file is assumed to:
 
 The current version of `DuplexUMIConsensusReads` is recommended to be used for input files that had been processed by [fulcrumgenomics GroupReadsByUMI tool](http://fulcrumgenomics.github.io/fgbio/tools/latest/GroupReadsByUmi.html)
 
+<br/>
 
 ### Optional arguments
 
@@ -107,16 +114,18 @@ Optional arguments in `DuplexUMIConsensusReads` are:
 | deletion score |  | --deletion_score | int | quality score (Phred score) for a deletion | 30                                                                                                                                                                                                                                                                                                          |
 | score for the absence of insertion |  | --no_insertion_score | int | Quality score (Phred score) for the "absence of an insertion". This refers to reads not having any insertion in a position where other reads from the same family have an insertion. | 30                                                                                                                                                                                                                                                                                                          |
 
+<br/>
+
 ## Help
 
 To get inline help about the usage and arguments, run: 
 ```
 python3 DuplexUMIConsensusReads.py -h
 ```
-  
-  
-  
-# Theoretical concepts {#theory}
+<br/>
+
+# **Theoretical concepts** {#theory}
+<br/>
 
 ## Paired-end sequencing 
 
@@ -128,6 +137,8 @@ Paired-end sequencing is a sequencing method that generates reads mapping to bot
 
 ![](figs/pairedend.png){ width=60% }
 
+<br/>
+
 ## Duplex Unique Molecular Identifiers (UMIs)
 
 Before sequencing, the DNA fragments resulting from the library can tagged with known DNA sequences in order to identify the source DNA molecule of the resulting reads. 
@@ -137,6 +148,8 @@ These known sequences, of around 6bp, are known as Unique Molecular Identifiers 
 They can be attached to one end of the DNA fragment or to the two ends. The latter are known as DuplexUMIs, and these type of reads are what ```DuplexUMIConsensusReads``` processes. 
 
 ![](figs/duplexUMIs.png){ width=60% }
+
+<br/>
 
 
 ## Family {#family}
@@ -164,27 +177,29 @@ These reads can be either from the forward DNA strand or the reverse DNA strand 
 ![](figs/family0.png){ width=75% }
 ![](figs/familyAB.png){ width=75% }
 
+<br/>
 
 ## Consensus reads
 
 When having multiple reads coming from the same DNA source molecule (i.e. the same family), one can detect which nucleotide mutations are not real mutations, but technical errors in the sequencing process, as they are present in a minor number of reads.
 
-In order to reduce the number of technical errors, one can generate a *consensus sequence*, formed by the most likely nucleotides at each position, considering all the sequences from the input reads. 
+In order to reduce the number of technical errors, one can generate a **consensus sequence**, formed by the most likely nucleotides at each position, considering all the sequences from the input reads. 
 
 This way, variant detection improves considerably, since mutations are more likely to be real mutations, rather than technical errors during sequencing.
 
 ![](figs/consensus_basic.png){ width=40% }
 
+<br/>
 
 ### Consensus reads in Duplex-UMI paired-end sequencing {#duplexconsensus}
 
 As seen in [Family section](#family), reads from the same source DNA fragment can be grouped into four categories. 
 
-The first step to generate the consensus read of the family (i.e. representing the source DNA fragment), is generating *single-strand consensus reads* for each subfamily. 
+The first step to generate the consensus read of the family (i.e. representing the source DNA fragment), is generating **single-strand consensus reads** for each subfamily. 
 
 One can see that sequences from subfamily A1 (strand A - forward) and B2 (strand B - reverse) map to the same position, as well as the sequences from subfamily A2 (strand A - forward) and B1 (strand B - reverse). 
 
-Therefore, once the four single-strand consensus are computed, A1 and B2 consensus will be grouped and used as input to create a *double-strand consensus read*; as well as B1 and A2 single-consensus will be used as input to create a second double-strand consensus read.
+Therefore, once the four single-strand consensus are computed, A1 and B2 consensus will be grouped and used as input to create a **double-strand consensus read**; as well as B1 and A2 single-consensus will be used as input to create a second double-strand consensus read.
 
 This will result in two double-strand consensus reads for each family: one mapping to the forward strand (A1-B2), and one mapping to the reverse strand (B1-A2).
 
@@ -194,10 +209,13 @@ _Note that a read coming from the forward strand (A1, A2) is different than a re
 
 For more detailed information on how to generate consensus reads, please visit  [make_consensus_read() function](#function).
 
+<br/>
 
-# Pipeline
+# **Pipeline**
+<br/>
 
 ## Input
+
 ```DuplexUMIConsensusReads``` takes a _.bam_ file as input. Other file format will not be accepted and an error will raise, ending the execution.
 
 The reads in the input _.bam_ file are assumed to:
@@ -217,9 +235,11 @@ The current version of `DuplexUMIConsensusReads` is recommended to be used for i
 
 If changes are made in [Step 2: add read into family](#step2), ```MI``` tag might be no longer needed (note that the error handling for the presence of ```MI``` tag in Step 1 would also need to be erased). 
 
+<br/>
 
 Once the input file is read, `DuplexUMIConsensusReads` loads the input reads iteratively. For each read loaded, the script goes through the following steps:
-
+  
+<br/>  
 
 ## 1. Filter read {#step1}
 
@@ -252,33 +272,36 @@ This step also included a checkpoint for some possible errors in the read. If an
  
 The code executing this step is contained in the function ```pass_filters(read)```. 
   
-  
+<br/>
+
 ## 2. Add read into a family {#step2}
 
 If the read has passed all the filters in [Step 1](#step1), it will be added to the family it belongs to. 
 
 Three situations can occur:
 
-* *The input read is the first read in the file*: therefore, no family has been loaded yet. The `read` will be added to a new `family` variable and the `family_code` will be set to the read's `MI` tag. Next, the program will load a new read and start [Step 1](#step1) again. 
+* **The input read is the first read in the file**: therefore, no family has been loaded yet. The `read` will be added to a new `family` variable and the `family_code` will be set to the read's `MI` tag. Next, the program will load a new read and start [Step 1](#step1) again. 
 
-* *The input read belongs to the currently-loaded family* (`MI` tag of read == `family_code`): the `read` will be appended to a to the `family` variable. Next, the program will load a new read and start [Step 1](#step1) again.
+* **The input read belongs to the currently-loaded family** (`MI` tag of read == `family_code`): the `read` will be appended to a to the `family` variable. Next, the program will load a new read and start [Step 1](#step1) again.
 
-* *The input read does not belong to the currently-loaded family* (`MI` tag of read != `family_code`): the `read` will be added to a new variable named `next_family`. The currently-loaded family will be considered as completely-loaded and the program will proceed with [Step 3](#step3). After processing the current family and generating the consensus reads for that family, the read stored in `next_family` will be moved the variable `family`, so that the next family is ready to be processed (done in `load_next_family()` function).
+* **The input read does not belong to the currently-loaded family** (`MI` tag of read != `family_code`): the `read` will be added to a new variable named `next_family`. The currently-loaded family will be considered as completely-loaded and the program will proceed with [Step 3](#step3). After processing the current family and generating the consensus reads for that family, the read stored in `next_family` will be moved the variable `family`, so that the next family is ready to be processed (done in `load_next_family()` function).
 
 
 As it can be observed, the structure of this Step requires that the input file has the reads sorted by family. 
 
 The code executing this step is contained in the function ```add_read_to_family(read, family, family_code)```.
 
-*NOTE*: this function can be changed in the future if another type of _.bam_ input file is desired to be used (note that the checkpoints in [Step 1](#step1) for the presence of `MI`and `RX` tags might need to be removed too). 
+**NOTE**: this function can be changed in the future if another type of _.bam_ input file is desired to be used (note that the checkpoints in [Step 1](#step1) for the presence of `MI`and `RX` tags might need to be removed too). 
 
-
+<br/>
 
 ## 3. Pre-process the family {#step3}
 
 Once the current family has been completely loaded (`next_family != None`) in [Step 2](#step2), their corresponding consensus sequences can be generated. 
 
-Before that a pre-processing step is needed. It includes the following parts:
+Before that a pre-processing step is needed. The code executing this step is contained in the function `preprocess_family(family, family_code)`. It includes the following sub-steps:
+
+<br/>
 
 ### 3.1. Checkpoint for possible errors in the family
 
@@ -287,12 +310,16 @@ If any of the following conditions is not met, an error is raised and the progra
   * All the reads in the family have the same DuplexUMIs sequences (either UMI1-UMI2 or UMI2-UMI1) - done in function `check_family_UMIs(family, family_code)`
   
   * All the reads in the family have the same value in the `rname` field (e.g. chromosome number) - done in function `check_family_rnames(family, family_code)`. _For more information about `rname` field and other SAM format specifications, please visit [SAM documentation](https://samtools.github.io/hts-specs/SAMv1.pdf)_
-  
+
+<br/>
+
 ### 3.2. Split the family
 
 As stated in [Theoretical Concepts](#theory) section, families can be divided into four groups, depending on whether the read maps to the forward or reverse strand and whether it is first or second paired-end.
 
 In this sub-step, the variable `family` will be converted from a list of reads to a list of four lists of reads, corresponding to each group. This is done in function `split_family(family)`. 
+
+<br/>
 
 ### 3.3 Check number of reads on each subfamily
 
@@ -306,6 +333,8 @@ The code executing this sub-step is in function `check_number_reads(family, min_
 
 If all the subfamilies contained a greater or equal number of reads than the threshold, the pre-processing step can continue. The following steps are done per read.
 
+<br/>
+
 ### 3.4 Remove read's clips
 
 For each read, hard clips and soft clips are removed from the read's sequence, base qualities and CIGAR string.
@@ -314,12 +343,15 @@ It assumes that soft-clips can only be observed at the start/end of the sequence
 
 The code executing this sub-step is in function `remove_clipping(read)`.
 
+<br/>
 
 ### 3.5 Mask low-quality bases
 
 For each read, all bases having a quality smaller than a threshold will be masked (transformed to "N"). This threshold can passed to the script with the argument `--min_base_quality`. This will prevent low-quality nucleotides from being considered for the consensus sequence.
 
 The code executing this sub-step is in function `mask_low_quality_bases(read, threshold)`.
+
+<br/>
 
 ### 3.6. Trim masked bases in 3'-end 
 
@@ -329,6 +361,7 @@ The code executing this sub-step is in function `trim_3prime_N(read)`.
 
 **NOTE**: a new step could be included here: 3’ low-quality trimming, instead of only 3' N trimming.
 
+<br/>
 
 ## 4. Call single-strand consensus reads {#step4}
 
@@ -340,6 +373,8 @@ The function `make_consensus_read()` is the core of the script and is explained 
 
 *Speak about tags!*
 
+<br/>
+
 ## 5. Call double-strand consensus reads {#step5}
 
 Once the single-strand consensus reads have been generated, A1 and B2 consensus will be grouped; as well as B1 and A2 consensus (see [Consensus reads in Duplex-UMI paired-end sequencing](#duplexconsensus) for more details). 
@@ -350,24 +385,38 @@ This will result in two double-strand consensus reads for the current family: on
 
 *Speak about tags!*
 
-## 6. Fix paired-end information {#step6}
-insert text
+<br/>
 
+## 6. Fix paired-end information {#step6}
+
+The two double-strand consensus reads resulting from [Step 5](#step5) do not have values in the mate fields (see [SAM documentation](https://samtools.github.io/hts-specs/SAMv1.pdf) for more information on .sam format specifications): `rnext` (mate reference name), `pnext` (mate starting position) and `tlen` (template length). 
+
+In this step, the reference name and starting position of one consensus read are set in the mate fields of the other consensus read, and vice-versa. Template length is also calculated and set in the two consensus reads.
+
+The code executing this step is contained in the function `fix_paired_end_fields (consensus_1, consensus_2)`.
+
+<br/>
 
 ## Output {#output}
-insert text
+Finally, the two consensus reads for the currently-loaded family are writen in the output _cons.bam_ file.
+
+There are two other output files:
+
+* _filtered_reads.bam_: reads that did not pass the filters from [Step 1](#step1)
+* _filtered_families.bam_: reads from the families that failed the pre-processing step ([Step 3](#step3)) due to a low number of reads in any of the subfamilies.
+
+<br/>
 
 
-
-# make_consensus_read() function {#function}
+# **make_consensus_read() function** {#function}
 
 This function is the core of the script and, due to its complexity and relevance, will be explained individually in this Section. For more information about when it is used, please visit [Step 4](#step4) and [Step 5](#step5) of the pipeline.
 
 
+<br/>
 
 
-
-# Author
+# **Author**
 
 Paula Rodríguez García (<p.rodriguezgar@hotmail.com>)
   
