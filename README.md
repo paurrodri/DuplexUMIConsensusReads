@@ -23,7 +23,7 @@ These input reads are assumed to:
   
 The mathematical and probabilistic procedure to determine the consensus sequence is based on [fulcrumgenomics CallMolecularConsensusReads tool](https://github.com/fulcrumgenomics/fgbio/wiki/Calling-Consensus-Reads).
   
-The additional feature in this tool is that the mapping information of the consensus reads is also computed. Therefore, there is no need to map the consensus reads again after using this tool.
+The new feature in this tool is that the mapping information of the consensus reads is also computed. This includes _mapping position_, _mapping quality_ and _CIGAR string_ fields. Therefore, there is no need to map the consensus reads again after using this tool.
 
 
 ## Installation

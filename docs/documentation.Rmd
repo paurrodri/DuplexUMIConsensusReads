@@ -36,7 +36,9 @@ These input reads are assumed to:
   
 The mathematical and probabilistic procedure to determine the consensus sequence is based on [fulcrumgenomics CallMolecularConsensusReads tool](https://github.com/fulcrumgenomics/fgbio/wiki/Calling-Consensus-Reads).
   
-The additional feature in this tool is that the mapping information of the consensus reads is also computed. Therefore, there is no need to map the consensus reads again after using this tool.
+The novel feature of this tool is the fact that mapping information of the consensus reads is also computed. This includes _mapping position_, _mapping quality_ and _CIGAR string_ fields. Therefore, there is no need to map the consensus reads again after using this tool. 
+
+This feature is contained in the script function `make_consensus_read()`, which is the core of the script and is explained in this [Section](#function).
 
 
 # How to use
@@ -111,14 +113,33 @@ To get inline help about the usage and arguments, run:
 ```
 python3 DuplexUMIConsensusReads.py -h
 ```
-
+  
+  
+  
 # Theoretical concepts {#theory}
+
+## Paired-end sequencing 
+
+Paired-end sequencing is a sequencing method that generates reads mapping to both ends of a DNA fragment. This way, individual reads can be aligned together to create paired-end reads, which is convinient for several reasons:
+
+* greater ability to detect insertion-deletion (INDEL) variants as well as repeated elements, which is not possible with single reads
+
+* it produces twice the number of reads for the same time and effort in library preparation
+
+![](figs/pairedend.png){ width=60% }
+
 ## Duplex Unique Molecular Identifiers (UMIs)
 
-Before sequencing, the DNA fragments resulting from the library can tagged with known DNA sequences in order to identify the source DNA molecule of the resulting reads. These known sequences, of around 6bp, are known as Unique Molecular Identifiers (UMIs). They can be attached to one end of the DNA fragment or to the two ends. The latter are known as DuplexUMIs, and these type of reads are what ```DuplexUMIConsensusReads``` processes. 
+Before sequencing, the DNA fragments resulting from the library can tagged with known DNA sequences in order to identify the source DNA molecule of the resulting reads. 
+
+These known sequences, of around 6bp, are known as Unique Molecular Identifiers (UMIs). 
+
+They can be attached to one end of the DNA fragment or to the two ends. The latter are known as DuplexUMIs, and these type of reads are what ```DuplexUMIConsensusReads``` processes. 
+
+![](figs/duplexUMIs.png){ width=60% }
 
 
-## Family
+## Family {#family}
 The concept of "family" refers to a group of reads that:
 
 * map to the same position
@@ -140,19 +161,38 @@ These reads can be either from the forward DNA strand or the reverse DNA strand 
 
 * B2: second pair, maps forward strand
 
+![](figs/family0.png){ width=75% }
+![](figs/familyAB.png){ width=75% }
 
 
 ## Consensus reads
 
-### Definition
-When having multiple reads coming from the same DNA source molecule (i.e. the same family), one can detect which nucleotide mutations are technical errors in the sequencing process, as they are present in a minor number of reads.
+When having multiple reads coming from the same DNA source molecule (i.e. the same family), one can detect which nucleotide mutations are not real mutations, but technical errors in the sequencing process, as they are present in a minor number of reads.
 
 In order to reduce the number of technical errors, one can generate a *consensus sequence*, formed by the most likely nucleotides at each position, considering all the sequences from the input reads. 
 
 This way, variant detection improves considerably, since mutations are more likely to be real mutations, rather than technical errors during sequencing.
 
-### How to compute them
-*Talk about how consensus is made - single + double*
+![](figs/consensus_basic.png){ width=40% }
+
+
+### Consensus reads in Duplex-UMI paired-end sequencing {#duplexconsensus}
+
+As seen in [Family section](#family), reads from the same source DNA fragment can be grouped into four categories. 
+
+The first step to generate the consensus read of the family (i.e. representing the source DNA fragment), is generating *single-strand consensus reads* for each subfamily. 
+
+One can see that sequences from subfamily A1 (strand A - forward) and B2 (strand B - reverse) map to the same position, as well as the sequences from subfamily A2 (strand A - forward) and B1 (strand B - reverse). 
+
+Therefore, once the four single-strand consensus are computed, A1 and B2 consensus will be grouped and used as input to create a *double-strand consensus read*; as well as B1 and A2 single-consensus will be used as input to create a second double-strand consensus read.
+
+This will result in two double-strand consensus reads for each family: one mapping to the forward strand (A1-B2), and one mapping to the reverse strand (B1-A2).
+
+_Note that a read coming from the forward strand (A1, A2) is different than a read mapping to the forward strand (A1, B2)_
+
+![](figs/doubleconsensus.png){ width=75% }
+
+For more detailed information on how to generate consensus reads, please visit  [make_consensus_read() function](#function).
 
 
 # Pipeline
@@ -290,14 +330,41 @@ The code executing this sub-step is in function `trim_3prime_N(read)`.
 **NOTE**: a new step could be included here: 3’ low-quality trimming, instead of only 3' N trimming.
 
 
-## 4. Call single-strand consensus reads
+## 4. Call single-strand consensus reads {#step4}
+
+As explained in [Consensus reads in Duplex-UMI paired-end sequencing](#duplexconsensus), the first step in consensus calling is generating single-strand consensus reads for each subfamily. 
+
+Therefore, the function `make_consensus_read()` will be called four times, with the reads of each subfamily as input.
+
+The function `make_consensus_read()` is the core of the script and is explained in this [Section](#function).
+
+*Speak about tags!*
+
+## 5. Call double-strand consensus reads {#step5}
+
+Once the single-strand consensus reads have been generated, A1 and B2 consensus will be grouped; as well as B1 and A2 consensus (see [Consensus reads in Duplex-UMI paired-end sequencing](#duplexconsensus) for more details). 
+
+The function `make_consensus_read()` (see [function](#function)) will be called twice, with the single-consensus reads from each of the two groups as input. 
+
+This will result in two double-strand consensus reads for the current family: one mapping to the forward strand (A1-B2 - arbitrarily set as _paired-end 1_), and one mapping to the reverse strand (B1-A2 - arbitrarily set as _paired-end 2_).
+
+*Speak about tags!*
+
+## 6. Fix paired-end information {#step6}
 insert text
 
-## 5. Call double-strand consensus reads
+
+## Output {#output}
 insert text
 
-## 6. Fix paired-end information
-insert text
+
+
+# make_consensus_read() function {#function}
+
+This function is the core of the script and, due to its complexity and relevance, will be explained individually in this Section. For more information about when it is used, please visit [Step 4](#step4) and [Step 5](#step5) of the pipeline.
+
+
+
 
 
 # Author
