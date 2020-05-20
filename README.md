@@ -25,6 +25,8 @@ The mathematical and probabilistic procedure to determine the consensus sequence
   
 The new feature in this tool is that the mapping information of the consensus reads is also computed. This includes _mapping position_, _mapping quality_ and _CIGAR string_ fields. Therefore, there is no need to map the consensus reads again after using this tool.
 
+`DuplexUMIConsensusReads` is implemented in Python and uses [pysam](https://pysam.readthedocs.io/en/latest/api.html) library to parse and handle reads.
+
 
 ## Installation
 
