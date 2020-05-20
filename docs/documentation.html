@@ -1877,7 +1877,7 @@ body {
 <p><br /></p>
 </div>
 <div id="trim-masked-bases-in-3-end" class="section level3">
-<h3>3.6. Trim masked bases in 3’-end</h3>
+<h3>3.6 Trim masked bases in 3’-end</h3>
 <p>For each read, all masked (“N”) bases in 3’-end will be trimmed. This will modify the read’s sequence, base qualities and CIGAR string.</p>
 <p>The code executing this sub-step is in function <code>trim_3prime_N(read)</code>.</p>
 <p><strong>NOTE</strong>: a new step could be included here: 3’ low-quality trimming, instead of only 3’ N trimming.</p>
@@ -2015,7 +2015,7 @@ Post_{cons=B} = \frac {L_{cons=B}} {\sum_{C \in \{A,T,C,G,+,-\}} L_{cons=C}}
 <p><br /></p>
 </div>
 <div id="adjust-output-consensus-base-qualities" class="section level3">
-<h3>2.3.Adjust output consensus base qualities</h3>
+<h3>2.3 Adjust output consensus base qualities</h3>
 <ul>
 <li><ol style="list-style-type: decimal">
 <li>The consensus raw base quality (the posterior probability) is turned into an error probability</li>
@@ -2048,7 +2048,7 @@ Q_{cons}=-10*log_{10}(Pr&#39;_{err})
 <p>After generating the consensus sequence and consensus base qualities in an aligned format, the rest of the fields of the consensus reads need to be adjusted in order to create a complete consensus read.</p>
 <p><br /></p>
 <div id="consensus-sequence-base-qualities-position-and-cigar" class="section level3">
-<h3>3.1. Consensus sequence, base qualities, position and CIGAR</h3>
+<h3>3.1 Consensus sequence, base qualities, position and CIGAR</h3>
 <p>The code executing this sub-step is contained in the function <code>adjust_consensus_fields()</code></p>
 <ul>
 <li><p><strong>CIGAR string</strong>: taken into account the alignment of consensus sequence, the consensus CIGAR string will be generated.</p></li>
@@ -2061,7 +2061,7 @@ Q_{cons}=-10*log_{10}(Pr&#39;_{err})
 <p><br /></p>
 </div>
 <div id="other-fields" class="section level3">
-<h3>3.2. Other fields</h3>
+<h3>3.2 Other fields</h3>
 <p>These fields are adjusted arbitrarily, each of them in independent functions that can be customized in the future.</p>
 <ul>
 <li><p><strong>Mapping quality</strong>: an average of the input reads’ mapping qualities is computed and used as the consensus mapping quality. Done in function <code>calculate_consensus_mapping_quality()</code>. <strong>A more precise method to calculate the consensus mapping quality is needed to get more realistic and meaningful results</strong>.</p></li>
@@ -2073,7 +2073,32 @@ Q_{cons}=-10*log_{10}(Pr&#39;_{err})
 </div>
 <div id="optional-tags" class="section level3">
 <h3>3.3 Optional tags</h3>
-<p>text</p>
+<p>Tags will depend on whether the consensus read is single-strand (<code>method = &#39;single_strand&#39;</code>) or double-strand (<code>method = &#39;double_strand&#39;</code>).</p>
+<p>Tags present in single-strand consensus reads are:</p>
+<ul>
+<li><code>MI</code>: [string] family code</li>
+<li><code>RX</code>: [string] UMI sequence</li>
+<li><code>sQ</code>: [list] of mapping qualities of input reads</li>
+<li><code>sd</code>: [list] for each position, count of bases from input reads contributing to the consensus base</li>
+<li><code>sD</code>: [int] maximum number of input reads contributing to the consensus at any position</li>
+<li><code>sM</code>: [int] minimum number of input reads contributing to the consensus at any position</li>
+<li><code>se</code>: [list] for each position, count of bases from input reads disagreeing with the final consensus base</li>
+<li><code>sE</code>: [float] fraction of bases in input reads disagreeing with the final consensus bases (across all positions)</li>
+</ul>
+<p>In double-strand consensus reads, most tags are named with <code>a</code>, <code>b</code> or <code>c</code> refering, respectively, to the first single-strand consensus (A1 or B1), to the second single-strand consensus (B2 or A2) or to the double-strand consensus (A1-B2 or B1-A2). The tags present in double-strand consensus reads are:</p>
+<ul>
+<li><code>MI</code>: [string] family code</li>
+<li><code>RX</code>: [string] UMI sequence</li>
+<li><code>aQ</code> <code>bQ</code> <code>cQ</code>: [list] of mapping qualities of input reads</li>
+<li><code>ad</code> <code>bd</code> <code>cd</code>: [list] for each position, count of bases from input reads contributing to the consensus base</li>
+<li><code>aD</code> <code>bD</code> <code>cD</code>: [int] maximum number of input reads contributing to the consensus at any position</li>
+<li><code>aM</code> <code>bM</code> <code>cM</code>: [int] minimum number of input reads contributing to the consensus at any position</li>
+<li><code>ae</code> <code>be</code> <code>ce</code>: [list] for each position, count of bases from input reads disagreeing with the final consensus base</li>
+<li><code>aE</code> <code>bE</code> <code>cE</code>: [float] fraction of bases in input reads disagreeing with the final consensus bases (across all positions)</li>
+<li><code>ac</code> <code>bc</code>: [str] single-strand consensus sequence</li>
+<li><code>aq</code> <code>bq</code>: [str] single-strand consensus qualities (ASCII + 33 encoded)</li>
+</ul>
+<p>Most of these tags are based on <a href="http://fulcrumgenomics.github.io/fgbio/tools/latest/CallDuplexConsensusReads.html">fulcrumgenomics CallDuplexConsensusReads tool</a></p>
 <p><br /></p>
 </div>
 </div>
@@ -2098,7 +2123,29 @@ Q_{cons}=-10*log_{10}(Pr&#39;_{err})
 </div>
 <div id="future-improvements" class="section level1">
 <h1><strong>Future improvements</strong></h1>
-<p>insert text</p>
+<p><br /></p>
+<p>As it has been stated along the documentation, a number of improvements need to be made:</p>
+<ul>
+<li><ol style="list-style-type: decimal">
+<li>Implement a more precise method to calculate consensus mapping quality (in contrast to a simple average calculation)</li>
+</ol></li>
+<li><ol start="2" style="list-style-type: decimal">
+<li>Consider CIGAR operations <code>=</code> (mapping match, sequence match) and <code>X</code> (mapping match, sequence mismatch), without transforming them to <code>M</code> (mapping match regardless of sequence)</li>
+</ol></li>
+<li><ol start="3" style="list-style-type: decimal">
+<li>Include 3’ low-quality trimming (in contrast to only 3’ N trimming) in the pre-processing step (<a href="#step3">Step 3</a>)</li>
+</ol></li>
+</ul>
+<p><br /></p>
+<p>Furthermore, other features could be implemented:</p>
+<ul>
+<li><ol start="4" style="list-style-type: decimal">
+<li>Add different functions to group reads into family - <a href="#step2">Step 2</a> - in order to use different types of input files (keeping the <em>.bam</em> format)</li>
+</ol></li>
+<li><ol start="5" style="list-style-type: decimal">
+<li>Add an option of single-end output consensus read, and not only paired-end consensus</li>
+</ol></li>
+</ul>
 <p><br /></p>
 </div>
 <div id="author" class="section level1">

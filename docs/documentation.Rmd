@@ -614,7 +614,36 @@ These fields are adjusted arbitrarily, each of them in independent functions tha
 <br/>
 
 ### 3.3 Optional tags
-text
+
+Tags will depend on whether the consensus read is single-strand (`method = 'single_strand'`) or double-strand (`method = 'double_strand'`).
+
+Tags present in single-strand consensus reads are:
+
+* `MI`: [string] family code
+* `RX`: [string] UMI sequence
+* `sQ`: [list] of mapping qualities of input reads
+* `sd`: [list] for each position, count of bases from input reads contributing to the consensus base
+* `sD`: [int] maximum number of input reads contributing to the consensus at any position
+* `sM`: [int] minimum number of input reads contributing to the consensus at any position
+* `se`: [list] for each position, count of bases from input reads disagreeing with the final consensus base
+* `sE`: [float] fraction of bases in input reads disagreeing with the final consensus bases (across all positions)
+
+
+In double-strand consensus reads, most tags are named with `a`, `b` or `c` refering, respectively, to the first single-strand consensus (A1 or B1), to the second single-strand consensus (B2 or A2) or to the double-strand consensus (A1-B2 or B1-A2). The tags present in double-strand consensus reads are:
+
+* `MI`: [string] family code
+* `RX`: [string] UMI sequence
+* `aQ` `bQ` `cQ`: [list] of mapping qualities of input reads
+* `ad` `bd` `cd`: [list] for each position, count of bases from input reads contributing to the consensus base
+* `aD` `bD` `cD`: [int] maximum number of input reads contributing to the consensus at any position
+* `aM` `bM` `cM`: [int] minimum number of input reads contributing to the consensus at any position
+* `ae` `be` `ce`: [list] for each position, count of bases from input reads disagreeing with the final consensus base
+* `aE` `bE` `cE`: [float] fraction of bases in input reads disagreeing with the final consensus bases (across all positions)
+* `ac` `bc`: [str] single-strand consensus sequence
+* `aq` `bq`: [str] single-strand consensus qualities (ASCII + 33 encoded)
+
+Most of these tags are based on [fulcrumgenomics CallDuplexConsensusReads tool](http://fulcrumgenomics.github.io/fgbio/tools/latest/CallDuplexConsensusReads.html)
+
 
 <br/>
 
@@ -639,7 +668,23 @@ Finally, `make_consensus_read()`function will return this _pysam.AlignedSegment_
 <br/>
 
 # **Future improvements**
-insert text
+<br/>
+  
+As it has been stated along the documentation, a number of improvements need to be made:
+
+* 1. Implement a more precise method to calculate consensus mapping quality (in contrast to a simple average calculation)
+
+* 2. Consider CIGAR operations `=` (mapping match, sequence match) and `X` (mapping match, sequence mismatch), without transforming them to `M` (mapping match regardless of sequence)
+
+* 3. Include 3' low-quality trimming (in contrast to only 3' N trimming) in the pre-processing step ([Step 3](#step3))
+
+<br/>
+
+Furthermore, other features could be implemented:
+
+* 4. Add different functions to group reads into family - [Step 2](#step2) - in order to use different types of input files (keeping the _.bam_ format)
+
+* 5. Add an option of single-end output consensus read, and not only paired-end consensus
 
 <br/>
 
