@@ -40,6 +40,8 @@ The novel feature of this tool is the fact that mapping information of the conse
 
 This feature is contained in the script function `make_consensus_read()`, which is the core of the script and is explained in this [Section](#function).
 
+`DuplexUMIConsensusReads` is implemented in Python and uses [pysam](https://pysam.readthedocs.io/en/latest/api.html) library to parse and handle reads.
+
 <br/>
 
 
@@ -81,7 +83,7 @@ python3 DuplexUMIConsensusReads.py -i <inputfile.bam>
 
 ### Required arguments
 
-The only required argument is the **input file**, given with `-i` or `--input_file`.
+The only required argument is the **input file**, given as `-i` or `--input_file`.
   
 The input file is assumed to:
 
@@ -135,6 +137,8 @@ Paired-end sequencing is a sequencing method that generates reads mapping to bot
 
 * it produces twice the number of reads for the same time and effort in library preparation
 
+<br/>
+
 ![](figs/pairedend.png){ width=60% }
 
 <br/>
@@ -146,6 +150,8 @@ Before sequencing, the DNA fragments resulting from the library can tagged with 
 These known sequences, of around 6bp, are known as Unique Molecular Identifiers (UMIs). 
 
 They can be attached to one end of the DNA fragment or to the two ends. The latter are known as DuplexUMIs, and these type of reads are what ```DuplexUMIConsensusReads``` processes. 
+
+<br/>
 
 ![](figs/duplexUMIs.png){ width=60% }
 
@@ -174,6 +180,8 @@ These reads can be either from the forward DNA strand or the reverse DNA strand 
 
 * B2: second pair, maps forward strand
 
+<br/>
+
 ![](figs/family0.png){ width=75% }
 ![](figs/familyAB.png){ width=75% }
 
@@ -186,6 +194,8 @@ When having multiple reads coming from the same DNA source molecule (i.e. the sa
 In order to reduce the number of technical errors, one can generate a **consensus sequence**, formed by the most likely nucleotides at each position, considering all the sequences from the input reads. 
 
 This way, variant detection improves considerably, since mutations are more likely to be real mutations, rather than technical errors during sequencing.
+
+<br/>
 
 ![](figs/consensus_basic.png){ width=40% }
 
@@ -205,7 +215,13 @@ This will result in two double-strand consensus reads for each family: one mappi
 
 _Note that a read coming from the forward strand (A1, A2) is different than a read mapping to the forward strand (A1, B2)_
 
+<br/>
+
 ![](figs/doubleconsensus.png){ width=75% }
+
+<br/>
+
+Also note that this method relies on the assumption that each end of a pair is independent. This method will not call consensus bases that overlap within a pair jointly.
 
 For more detailed information on how to generate consensus reads, please visit  [make_consensus_read() function](#function).
 
@@ -324,9 +340,9 @@ In this sub-step, the variable `family` will be converted from a list of reads t
 ### 3.3 Check number of reads on each subfamily
 
 In order to generate decent consensus sequences, a minumum number of reads in each subfamily/group is necessary. This threshold can passed to the script with the argument `--min_reads`.
-If any of the subfamilies contains a number of reads below this threshold, the family stops being processed and the program loads the next read and starts [Step 1](#step1) again.
+If any of the subfamilies contains a number of reads below this threshold, the family stops being processed and the program loads the next read and starts [Step 1](#step1) again. A warning message will be displayed if `verbose` option is set to true.
 
-The opposite situation can arise: if any subfamily contains a number of reads above another threshold (which can passed to the script with the argument `--max_reads`), the reads in that subfamily will be randomly downsampled to the threshold value. This is done in order to reduce the computation time when calling the consensus sequence.
+The opposite situation can arise: if any subfamily contains a number of reads above another threshold (which can passed to the script with the argument `--max_reads`), the reads in that subfamily will be randomly downsampled to the threshold value. This is done in order to reduce the computation time when calling the consensus sequence. A warning message will be displayed if `verbose` option is set to true.
 
 The code executing this sub-step is in function `check_number_reads(family, min_reads, max_reads)`.
 
@@ -353,7 +369,7 @@ The code executing this sub-step is in function `mask_low_quality_bases(read, th
 
 <br/>
 
-### 3.6. Trim masked bases in 3'-end 
+### 3.6 Trim masked bases in 3'-end 
 
 For each read, all masked ("N") bases in 3'-end will be trimmed. This will modify the read's sequence, base qualities and CIGAR string. 
 
@@ -371,7 +387,6 @@ Therefore, the function `make_consensus_read()` will be called four times, with 
 
 The function `make_consensus_read()` is the core of the script and is explained in this [Section](#function).
 
-*Speak about tags!*
 
 <br/>
 
@@ -383,7 +398,6 @@ The function `make_consensus_read()` (see [function](#function)) will be called 
 
 This will result in two double-strand consensus reads for the current family: one mapping to the forward strand (A1-B2 - arbitrarily set as _paired-end 1_), and one mapping to the reverse strand (B1-A2 - arbitrarily set as _paired-end 2_).
 
-*Speak about tags!*
 
 <br/>
 
@@ -405,6 +419,8 @@ There are two other output files:
 * _filtered_reads.bam_: reads that did not pass the filters from [Step 1](#step1)
 * _filtered_families.bam_: reads from the families that failed the pre-processing step ([Step 3](#step3)) due to a low number of reads in any of the subfamilies.
 
+If `verbose` option is set to True, at the end of the execution the program will print the number and percentage of reads that passed/did not pass the filters from [Step 1](#step1); as well as the number and percentage of families that failed the pre-processing step ([Step 3](#step3)).
+
 <br/>
 
 
@@ -412,9 +428,220 @@ There are two other output files:
 
 This function is the core of the script and, due to its complexity and relevance, will be explained individually in this Section. For more information about when it is used, please visit [Step 4](#step4) and [Step 5](#step5) of the pipeline.
 
+As mentioned earlier, the novel feature of this tool is the fact that mapping information of the consensus reads is also computed: _mapping position_, _mapping quality_ and _CIGAR string_ fields. Therefore, there is no need to map the consensus reads again after using this tool.
+
+Given a list of reads as input (assuming they come from the same family and map to the same strand), `make_consensus_read()` will return a single read with consensus sequence, consensus base qualities, consensus starting postion and consensus CIGAR string.
 
 <br/>
 
+This function performs in the following sub-steps:
+
+
+## 1. Reconstruct alignment {#reconstructalignment}
+
+In order to keep the mapping information when generating the consensus, the input reads will be aligned with each other based on their starting position and CIGAR strings. They will be aligned with each other but not with the reference, since it is not assumed that the reference genome sequence is available.
+
+This alignment uses a different symbology than the conventional one: it differenciates insertions from deletions in order to properly keep the mapping information of the consensus sequence. Therefore:
+
+* **deletions** are represented with a `-` sign
+
+* **insertions** are represented as the correspondent nucleotide letter in **lowercase**
+
+* **absence of insertions** (i.e. reads that do not have an insertion in a position where other reads have) are represented with a `+` sign
+
+* **empty positions** at the beginning or end of the read (i.e. positions where a sequence has not started/has already finished, but other input sequences map to) are represented with an `N` (in the base qualities, the minimum Phred score is used).
+
+* **sequence matching** nucleotides are represented as conventional, with the correspondent **uppercase** nucleotide letter.
+
+
+The code executing this sub-step is contained in function `reconstruct_alignment()`. As input, it requires the _i)_ sequences, _ii)_ base qualities, _iii)_ starting positions and _iv)_ CIGAR strings of the input reads. As output, it returns the _i)_ aligned sequences and _ii)_ the aligned base qualities.
+
+<br/>
+
+![](figs/reconstruct_alignment.png){ width=60% }
+
+<br/>
+
+*NOTE*: in this sub-step, CIGAR operations `=` (mapping match, sequence match) and `X` (mapping match, sequence mismatch) are transformed to `M` (mapping match, regardless of sequence). An improvement might be made in the future to keep `=` and `X` operations.
+
+<br/>
+
+## 2. Call consensus
+
+The code executing this sub-step is contained in function `call_consensus()`.  Given _i)_ the aligned sequences and _ii)_ the aligned base qualities of the input reads, it generates _i)_ the consensus sequence and _ii)_ the consensus base qualities.
+
+As mentioned earlier, the mathematical and probabilistic procedure to determine the consensus sequence is based on [fulcrumgenomics CallMolecularConsensusReads tool](https://github.com/fulcrumgenomics/fgbio/wiki/Calling-Consensus-Reads).
+  
+However, INDELs are also considered in this pipeline.
+
+<br/>
+
+### 2.1 Adjust input base qualities
+
+As done in [fulcrumgenomics CallMolecularConsensusReads tool](https://github.com/fulcrumgenomics/fgbio/wiki/Calling-Consensus-Reads), the base qualities are adjusted as follows:
+
+* 1. A fixed value (`Sq`) is subtracted from the phred-scaled base qualities (passed to the script with the argument `--base_quality_shift` ) and, next, the base qualities are capped to a maximum phred-scaled value (`Mq`- passed to the script with the argument `--max_base_quality`). These adjustments should only be used if there is a reason to believe the input base qualities are systematically over-estimated, otherwise this step should be ignored (keep the default parameters).
+
+$$
+Q' = min(Q-S_{q}, M_{q})
+$$
+
+* 2. Base qualities (Phred scores) are converted to a probability of sequencing error
+
+$$
+P_{Q'} = 10^{(-Q'/10)}
+$$
+
+* 3. The probability of error is adjusted to encapsulate both the probability of a sequencing error and the probability of a base substitution between the time the UMIs were attached to the source DNA fragment and the time the base was sequenced. The resulting probability is the error rate of all processes from right after integrating the UMIs through to the end of sequencing.
+
+$$
+P'_{Q'} = Err_{post}*(1-P_{Q'}) + (1-Err_{post})*P_{Q'} + (Err_{post}*P_{Q'}*4/5)
+$$
+
+
+  where $Err_{post}$ (passed with argument `--error_rate_post_labeling`) is the error rate for an error after the UMIs have been integrated to the fragment, but prior to sequencing. If the default value is kept, this step is ommitted. Recommended to tune this parameter in case of having prior knowledge about this error.
+
+  The latter formula comprises three probabilities:
+
+  - The probability of an after-UMI error and no sequencing error.
+
+  - The probability of no after_UMI error and a sequencing error.
+
+  - The probability of both errors, but without reversing the error of the first event. As there are 6 possibilities (4 bases, `-` and `+`; `N` is not considered due to lack of biological meaning), this situation would only occur 4/5 times.
+
+Note that base qualities for positions with a deletion or an _absence of insertion_ (see [previous Section](#reconstructalignment)) are kept equally, with signs `-` and `+`, respectively.
+
+<br/>
+
+### 2.2 Compute the most-likely nucleotide / INDEL
+
+Position by position, the most likely event is calculated. There are 6 possible biological events:
+
+* `A`
+* `T`
+* `C`
+* `G`
+* `+` (absence of insertion)
+* `-` (deletion)
+
+Note that `N` is not considered here since it does not have a biological meaning. 
+
+Therefore, for each position, the likelihoods ($L$) for these 6 events ($B$) are calculated, given the sequence and the adjusted probabilities of error of the input reads ($i$):
+
+
+$$
+L_{cons=B} = \prod_{i} 
+\begin{cases}
+P'_{Q`,i}/5 & \text{if } B\neq B_{i}\\
+(1-P'_{Q`,i}) & \text{if } B=B_{i}
+\end{cases}
+$$
+Note that for this step, base qualities for deletions (`-`) and absence of insertions (`+`) are substituted by the Phred scores passed as arguments `--deletion_score` and `--no_insertion_score`, respectively. A more appropriate method might be found in the future. 
+
+Next, the posterior probabilities are calculated by dividing the individual likelihoods by the sum of all six likelihoods.
+
+$$
+Post_{cons=B} = \frac {L_{cons=B}} {\sum_{C \in \{A,T,C,G,+,-\}} L_{cons=C}}
+$$
+
+The event with the maximum posterior probability is used as the consensus call, and one minus the posterior probability is used as its raw base quality.
+
+However, if the posterior probability of the most likely event is lower than a threshold (passed to the script with the argument `--min_base_quality`), the consensus base will be masked.
+
+The code executing this sub-step is contained in the function `most_likely_nucleotide()`
+
+<br/>
+
+### 2.3 Adjust output consensus base qualities
+
+* 1. The consensus raw base quality (the posterior probability) is turned into an error probability
+
+$$
+Pr_{err} = 1-Post_{cons}
+$$
+      
+* 2. The error probability is adjusted by including the probability of an error prior to integrating the UMIs.
+$$
+Pr'_{err} = Err_{pre}*(1-Pr_{err}) + (1-Err_{pre})*Pr_{err} + (Err_{pre}*Pr_{err}*4/5)
+$$
+
+where $Err_{pre}$ (passed with argument `--error_rate_pre_labeling`) is the error rate for an error before the UMIs have been integrated to the fragment. If the default value is kept, this step is ommitted. Recommended to tune this parameter in case of having prior knowledge about this error.
+
+* 3. The latter error probability is converted back to a Phred-scaled quality.
+
+$$
+Q_{cons}=-10*log_{10}(Pr'_{err})
+$$
+
+<br/>
+
+## 3. Adjust consensus fields
+
+After generating the consensus sequence and consensus base qualities in an aligned format, the rest of the fields of the consensus reads need to be adjusted in order to create a complete consensus read.
+
+<br/>
+
+### 3.1 Consensus sequence, base qualities, position and CIGAR
+
+The code executing this sub-step is contained in the function `adjust_consensus_fields()`
+
+* **CIGAR string**: taken into account the alignment of consensus sequence, the consensus CIGAR string will be generated.
+
+* **Sequence**: the alignment will be undone (i.e. remove `-` and `+`; substitute lowercase bases by uppercase bases) and the masked bases in 5' and 3' ends will be trimmed
+
+* **Base qualities**: same procedure as the consensus sequence.
+
+* **Starting position**: lowest starting position of all input reads, unless trimming is made.
+
+<br/>
+
+![](figs/adjustconsfields.png){ width=35% }
+
+<br/>
+
+### 3.2 Other fields
+
+These fields are adjusted arbitrarily, each of them in independent functions that can be customized in the future.
+
+* **Mapping quality**: an average of the input reads' mapping qualities is computed and used as the consensus mapping quality. Done in function `calculate_consensus_mapping_quality()`. **A more precise method to calculate the consensus mapping quality is needed to get more realistic and meaningful results**. 
+
+* **Read ID**: done in function `get_consensus_id()`
+
+* **Flag**: done in function `get_consensus_flag()`. If the consensus read is single-strand (`method = 'single_strand'`), the flag will be the same as the input reads' flag (it is the same for all of them). If the consensus read is double-strand (`method = 'double_strand'`), the flag will have the bit for "maps to forward strand" for the A1-B2 consensus; whereas for the B1-A2 consensus the flag will have the bit for "maps to reverse strand".
+
+* **rname**: the reference name of one of the input reads is taken as used for the consensus reads (in [Step 3](#step3) it was verified that all input reads to generate a consensus had the same `rname`)
+
+<br/>
+
+### 3.3 Optional tags
+text
+
+<br/>
+
+## 4. Create a read object
+
+With all the previously-calculated fields, a _pysam.AlignedSegment_ object will be created, containing:
+
+* ID
+* flag
+* rname
+* position
+* mapping quality
+* CIGAR
+* sequence
+* base qualities
+* tags
+
+Mate-related fields will be empty (they will be adjusted later in [Step 6](#step6))
+
+Finally, `make_consensus_read()`function will return this _pysam.AlignedSegment_ object representing the consensus read.  
+
+<br/>
+
+# **Future improvements**
+insert text
+
+<br/>
 
 # **Author**
 
